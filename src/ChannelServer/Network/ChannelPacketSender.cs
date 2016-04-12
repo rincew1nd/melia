@@ -333,6 +333,11 @@ namespace Melia.Channel.Network
 			character.Connection.Send(packet);
 		}
 
+		/// <summary>
+		/// Nonify client about hp change
+		/// </summary>
+		/// <param name="character"></param>
+		/// <param name="restoredHp"></param>
 		public static void ZC_ADD_HP(Character character, int restoredHp)
 		{
 			var packet = new Packet(Op.ZC_ADD_HP);
@@ -341,6 +346,8 @@ namespace Melia.Channel.Network
 			packet.PutInt(restoredHp);
 			packet.PutInt(character.Hp);
 			packet.PutInt(0); //increment number, maybe 0 will work correctly
+
+			character.Connection.Send(packet);
 		}
 
 		/// <summary>
@@ -1220,6 +1227,21 @@ namespace Melia.Channel.Network
 			packet.PutEmptyBin(4);
 			packet.PutFloat(1);
 			packet.PutEmptyBin(4);
+
+			character.Map.Broadcast(packet, character);
+		}
+		
+		/// <summary>
+		/// Plays hp restore effect.
+		/// </summary>
+		/// <param name="character"></param>
+		public static void ZC_NORMAL_HpChanged(Character character, int recovered)
+		{
+			var packet = new Packet(Op.ZC_NORMAL);
+			packet.PutInt(0x3A);
+			packet.PutInt(character.Handle);
+			packet.PutLpString("I_SYS_heal2");
+			packet.PutLpString(recovered.ToString());
 
 			character.Map.Broadcast(packet, character);
 		}

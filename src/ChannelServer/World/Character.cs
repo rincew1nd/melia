@@ -137,6 +137,40 @@ namespace Melia.Channel.World
 		public bool EyesOpen { get; private set; }
 
 		/// <summary>
+		/// Calculate HP and SP after LevelUP, stats changes and buffs
+		/// </summary>
+		public void CalculateHpAndSp()
+		{
+			double HpMultiplier;
+			double SpMultiplier;
+			switch (this.Job.ToClass())
+			{
+				case Class.Archer:
+					HpMultiplier = 1.4;
+					SpMultiplier = 0.9;
+					break;
+				case Class.Cleric:
+					HpMultiplier = 1.5;
+					SpMultiplier = 1.2;
+					break;
+				case Class.Swordsman:
+					HpMultiplier = 3.3;
+					SpMultiplier = 0.8;
+					break;
+				case Class.Wizard:
+					HpMultiplier = 1.1;
+					SpMultiplier = 1.2;
+					break;
+				default:
+					HpMultiplier = 1;
+					SpMultiplier = 1;
+					break;
+			}
+			this.MaxHp = (int) (85 * this.Con + 17 * HpMultiplier * (Level - 1));
+			this.MaxSp = (int) (13 * this.Spr + 6.7 * SpMultiplier * (Level - 1) + ((this.Job.ToClass() == Class.Cleric) ? 1.675 * Level : 0));
+		}
+
+		/// <summary>
 		/// Creates new character.
 		/// </summary>
 		public Character()
@@ -194,7 +228,6 @@ namespace Melia.Channel.World
 			this.SetPosition(x, y, z);
 			this.SetDirection(dx, dy);
 			this.IsMoving = true;
-			this.RestoreTimer = DateTime.MaxValue;
 
 			Send.ZC_MOVE_DIR(this, x, y, z, dx, dy, unkFloat);
 		}
@@ -221,7 +254,6 @@ namespace Melia.Channel.World
 			this.SetPosition(x, y, z);
 			this.SetDirection(dx, dy);
 			this.IsMoving = false;
-			this.RestoreTimer = DateTime.Now.AddSeconds(20);
 
 			// Sending ZC_MOVE_STOP works as well, but it doesn't have
 			// a direction, so the character stops and looks north
@@ -337,7 +369,8 @@ namespace Melia.Channel.World
 			//conn.Send(packet);
 
 			Send.ZC_PC_LEVELUP(this);
-			Send.ZC_OBJECT_PROPERTY(this, ObjectProperty.PC.StatByLevel);
+			this.CalculateHpAndSp();
+			Send.ZC_OBJECT_PROPERTY(this, ObjectProperty.PC.StatByLevel, ObjectProperty.PC.MHP, ObjectProperty.PC.MSP);
 			Send.ZC_NORMAL_LevelUp(this);
 
 			//packet = new Packet(Op.ZC_PC_PROP_UPDATE);
@@ -475,8 +508,9 @@ namespace Melia.Channel.World
 					if (this.Hp + restoredHp > this.MaxHp)
 						restoredHp = this.MaxHp - this.Hp;
 					this.Hp += restoredHp;
-
+					
 					Send.ZC_ADD_HP(this, restoredHp);
+					Send.ZC_NORMAL_HpChanged(this, restoredHp);
 
 					this.RestoreTimer = DateTime.Now.AddSeconds(this.IsSitting ? 10 : 20);
 				}
@@ -502,6 +536,7 @@ namespace Melia.Channel.World
 					this.Hp += restoredHp;
 
 					Send.ZC_ADD_HP(this, restoredHp);
+					Send.ZC_NORMAL_HpChanged(this, restoredHp);
 
 					this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);
 				}

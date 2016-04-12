@@ -45,6 +45,13 @@ else if(type == 0x51)
     int i2; // disappear delay?
     int i3; // disappear delay?
 }
+// HP restore
+else if(type == 0x3A)
+{
+    int handle;
+    lpString dialogKey; // ?
+    lpString dialogKey;
+}
 // ?
 else if(type == 0x139)
 {

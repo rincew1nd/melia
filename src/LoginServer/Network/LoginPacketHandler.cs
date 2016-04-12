@@ -253,14 +253,15 @@ namespace Melia.Login.Network
 			character.Position = new Position(jobData.StartX, jobData.StartY, jobData.StartZ);
 			character.BarrackPosition = new Position(bx, by, bz);
 
-			character.Hp = character.MaxHp = 100;
-			character.Sp = character.MaxSp = 50;
 			character.Stamina = character.MaxStamina = 25000;
 			character.Str = jobData.Str;
 			character.Con = jobData.Con;
 			character.Int = jobData.Int;
 			character.Spr = jobData.Spr;
 			character.Dex = jobData.Dex;
+
+			character.Hp = character.MaxHp = 85*jobData.Con;
+			character.Sp = character.MaxSp = 13*jobData.Spr + ((job == Job.Cleric) ? 2 : 0);
 
 			conn.Account.CreateCharacter(character);
 

@@ -10,7 +10,7 @@
 short op;
 int sequence;
  
-int id;
+int handle;
 int restored;
 int currentValue;
 int incrementNum;
