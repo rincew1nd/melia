@@ -59,14 +59,38 @@ namespace Melia.Channel.World
 		public bool IsGrounded { get; set; }
 
 		/// <summary>
+		/// Gets or sets whether the character is standing on the ground.
+		/// </summary>
+		public bool IsNearFireplace { get; set; }
+
+		/// <summary>
 		/// The character's inventory.
 		/// </summary>
 		public Inventory Inventory { get; protected set; }
 
 		/// <summary>
+		/// Character sitdown/standup 
+		/// </summary>
+		public void NearFireplace()
+		{
+			this.IsNearFireplace = !this.IsNearFireplace;
+			this.RestoreTimer = DateTime.Now.AddSeconds(this.IsSitting ? 10 : 20);
+		}
+
+		/// <summary>
 		/// Returns combined weight of all items the character is currently carrying.
 		/// </summary>
 		public float NowWeight { get { return this.Inventory.GetNowWeight(); } }
+
+		/// <summary>
+		/// Timer for restoring character HP and SP values
+		/// </summary>
+		public DateTime RestoreTimer { get; set; }
+
+		/// <summary>
+		/// Timer for restoring character HP and SP values near fireplace
+		/// </summary>
+		public DateTime RestoreFireplaceTimer { get; set; }
 
 		/// <summary>
 		/// Stat points.
@@ -126,6 +150,8 @@ namespace Melia.Channel.World
 			this.Handle = ChannelServer.Instance.World.CreateHandle();
 			this.Inventory = new Inventory(this);
 			this.Speed = 30;
+			this.RestoreTimer = DateTime.Now.AddSeconds(20);
+			this.RestoreFireplaceTimer = DateTime.MaxValue;
 		}
 
 		/// <summary>
@@ -168,8 +194,18 @@ namespace Melia.Channel.World
 			this.SetPosition(x, y, z);
 			this.SetDirection(dx, dy);
 			this.IsMoving = true;
+			this.RestoreTimer = DateTime.MaxValue;
 
 			Send.ZC_MOVE_DIR(this, x, y, z, dx, dy, unkFloat);
+		}
+
+		/// <summary>
+		/// Character sitdown/standup 
+		/// </summary>
+		public void SitDown()
+		{
+			this.IsSitting = !this.IsSitting;
+			this.RestoreTimer = DateTime.Now.AddSeconds(this.IsSitting ? 10 : 20);
 		}
 
 		/// <summary>
@@ -185,6 +221,7 @@ namespace Melia.Channel.World
 			this.SetPosition(x, y, z);
 			this.SetDirection(dx, dy);
 			this.IsMoving = false;
+			this.RestoreTimer = DateTime.Now.AddSeconds(20);
 
 			// Sending ZC_MOVE_STOP works as well, but it doesn't have
 			// a direction, so the character stops and looks north
@@ -416,6 +453,62 @@ namespace Melia.Channel.World
 		}
 
 		/// <summary>
+		/// Update character every Heartbeat
+		/// </summary>
+		public void RestoreHpSp()
+		{
+			if (this.RestoreTimer <= DateTime.Now)
+			{
+				if (this.Sp < this.MaxSp)
+				{
+					this.Sp += (int)this.Spr + this.Level / 2 + ((this.Job.ToClass() == Class.Cleric) ? this.Level / 4 : 0);
+					if (this.Sp > this.MaxSp)
+						this.Sp = this.MaxSp;
+
+					Send.ZC_UPDATE_SP(this);
+
+					this.RestoreTimer = DateTime.Now.AddSeconds(this.IsSitting ? 10 : 20);
+				}
+				if (this.Hp < this.MaxHp)
+				{
+					var restoredHp = (int)this.Con + this.Level / 2;
+					if (this.Hp + restoredHp > this.MaxHp)
+						restoredHp = this.MaxHp - this.Hp;
+					this.Hp += restoredHp;
+
+					Send.ZC_ADD_HP(this, restoredHp);
+
+					this.RestoreTimer = DateTime.Now.AddSeconds(this.IsSitting ? 10 : 20);
+				}
+			}
+
+			if (this.RestoreFireplaceTimer <= DateTime.Now)
+			{
+				if (this.Sp < this.MaxSp)
+				{
+					this.Sp += (int) (this.Spr + this.Level / 2 + ((this.Job.ToClass() == Class.Cleric) ? this.Level / 4 : 0)) / 2;
+					if (this.Sp > this.MaxSp)
+						this.Sp = this.MaxSp;
+
+					Send.ZC_UPDATE_SP(this);
+
+					this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);
+				}
+				if (this.Hp < this.MaxHp)
+				{
+					var restoredHp = (int) (this.Con + this.Level / 2) / 2;
+					if (this.Hp + restoredHp > this.MaxHp)
+						restoredHp = this.MaxHp - this.Hp;
+					this.Hp += restoredHp;
+
+					Send.ZC_ADD_HP(this, restoredHp);
+
+					this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);
+				}
+			}
+		}
+
+		/// <summary>
 		/// Sets direction and updates clients.
 		/// </summary>
 		/// <param name="d1"></param>
@@ -435,6 +528,11 @@ namespace Melia.Channel.World
 		{
 			this.SetHeadDirection(d1, d2);
 			Send.ZC_HEAD_ROTATE(this);
+		}
+
+		public void UpdateCharacter()
+		{
+			this.RestoreHpSp();
 		}
 	}
 }

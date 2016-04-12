@@ -333,6 +333,16 @@ namespace Melia.Channel.Network
 			character.Connection.Send(packet);
 		}
 
+		public static void ZC_ADD_HP(Character character, int restoredHp)
+		{
+			var packet = new Packet(Op.ZC_ADD_HP);
+
+			packet.PutInt(character.Handle);
+			packet.PutInt(restoredHp);
+			packet.PutInt(character.Hp);
+			packet.PutInt(0); //increment number, maybe 0 will work correctly
+		}
+
 		/// <summary>
 		/// Sends ZC_CHAT_MACRO_LIST to character.
 		/// </summary>
@@ -1680,12 +1690,11 @@ namespace Melia.Channel.Network
 		/// </summary>
 		/// <param name="character"></param>
 		/// <param name="spValue"></param>
-		public static void ZC_UPDATE_SP(Character character, short spValue)
+		public static void ZC_UPDATE_SP(Character character)
 		{
 			var packet = new Packet(Op.ZC_UPDATE_SP);
 			packet.PutInt(character.Handle);
-			packet.PutShort(spValue);
-			packet.PutShort(0);
+			packet.PutInt(character.Sp);
 			packet.PutByte(0);
 
 			character.Map.Broadcast(packet, character);

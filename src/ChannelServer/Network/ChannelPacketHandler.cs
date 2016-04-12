@@ -407,7 +407,7 @@ namespace Melia.Channel.Network
 		{
 			var character = conn.SelectedCharacter;
 
-			character.IsSitting = !character.IsSitting;
+			character.SitDown();
 
 			Send.ZC_REST_SIT(character);
 		}

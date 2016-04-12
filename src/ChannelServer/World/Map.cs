@@ -58,6 +58,7 @@ namespace Melia.Channel.World
 		{
 			this.Disappearances();
 			this.UpdateVisibility();
+			this.UpdateCharacter();
 		}
 
 		/// <summary>
@@ -84,6 +85,18 @@ namespace Melia.Channel.World
 			{
 				foreach (var character in _characters.Values)
 					character.LookAround();
+			}
+		}
+
+		/// <summary>
+		/// Update all character on this map
+		/// </summary>
+		private void UpdateCharacter()
+		{
+			lock (_characters)
+			{
+				foreach (var character in _characters.Values)
+					character.UpdateCharacter();
 			}
 		}
 

@@ -1,0 +1,16 @@
+//--------------------------------------
+//--- 010 Editor v6.0.2 Binary Template
+//
+// File: ZC_ADD_HP.bt
+// Author: rincew1nd
+// Revision:
+// Purpose:
+//--------------------------------------
+
+short op;
+int sequence;
+ 
+int id;
+int restored;
+int currentValue;
+int incrementNum;
