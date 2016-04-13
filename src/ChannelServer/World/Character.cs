@@ -520,11 +520,12 @@ namespace Melia.Channel.World
 			{
 				if (this.Sp < this.MaxSp)
 				{
-					this.Sp += (int) (this.Spr + this.Level / 2 + ((this.Job.ToClass() == Class.Cleric) ? this.Level / 4 : 0)) / 2;
+					int restoredSp = (int) (this.Spr + this.Level / 2 + ((this.Job.ToClass() == Class.Cleric) ? this.Level / 4 : 0)) / 2;
+					this.Sp += restoredSp;
 					if (this.Sp > this.MaxSp)
 						this.Sp = this.MaxSp;
-
-					Send.ZC_UPDATE_SP(this);
+					
+					Send.ZC_HEAL_INFO(this, restoredSp, this.MaxSp, false);
 
 					this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);
 				}
@@ -534,8 +535,8 @@ namespace Melia.Channel.World
 					if (this.Hp + restoredHp > this.MaxHp)
 						restoredHp = this.MaxHp - this.Hp;
 					this.Hp += restoredHp;
-
-					Send.ZC_ADD_HP(this, restoredHp);
+					
+					Send.ZC_HEAL_INFO(this, restoredHp, this.MaxHp, true);
 					Send.ZC_NORMAL_HpChanged(this, restoredHp);
 
 					this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);

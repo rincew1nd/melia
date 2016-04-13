@@ -1155,6 +1155,26 @@ namespace Melia.Channel.Network
 		}
 
 		/// <summary>
+		/// Heals creature's HP or SP
+		/// </summary>
+		/// <param name="character"></param>
+		/// <param name="recovered"></param>
+		/// <param name="current"></param>
+		/// <param name="isHp"></param>
+		public static void ZC_HEAL_INFO(Character character, int recovered, int current, bool isHp)
+		{
+			var packet = new Packet(Op.ZC_HEAL_INFO);
+			packet.PutInt(character.Handle);
+			packet.PutInt(recovered);
+			packet.PutInt(current);
+			packet.PutBinFromHex(isHp
+				? "00 00 00 00 00 00 D4 7C 00 01 68 C6"
+				: "00 00 00 00 00 00 D4 7C 01 01 68 C6");
+
+			character.Map.Broadcast(packet);
+		}
+
+		/// <summary>
 		/// Informs players about a hit that occured, and about the target's
 		/// new hp, after damage was applied.
 		/// </summary>
@@ -1757,25 +1777,6 @@ namespace Melia.Channel.Network
 			packet.PutInt(monsterActorId);
 
 			character.Map.Broadcast(packet, character);
-		}
-
-		/// <summary>
-		/// Heals creature's HP
-		/// </summary>
-		/// <param name="character"></param>
-		/// <param name="amountHealed"></param>
-		/// <param name="maxHP"></param>
-		public static void ZC_HEAL_INFO(Character character, int amountHealed, int maxHP)
-		{
-			var packet = new Packet(Op.ZC_HEAL_INFO);
-			packet.PutInt(character.Handle);
-			packet.PutInt(amountHealed);
-			packet.PutInt(maxHP);
-			packet.PutInt(1);
-			packet.PutInt(0);
-			packet.PutInt(0);
-
-			character.Map.Broadcast(packet);
 		}
 
 		/// <summary>
