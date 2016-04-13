@@ -88,6 +88,38 @@ namespace Melia.Channel.Network
 		}
 
 		/// <summary>
+		/// Custom commands
+		/// </summary>
+		/// <param name="conn"></param>
+		/// <param name="packet"></param>
+		[PacketHandler(Op.CZ_CUSTOM_COMMAND)]
+		public void CZ_CUSTOM_COMMAND(ChannelConnection conn, Packet packet)
+		{
+			int commandId = packet.GetInt();
+
+			if (commandId == 22)
+			{
+				int x = packet.GetInt();
+				int z = packet.GetInt();
+				int unkInt1 = packet.GetInt();
+				short unkShort1 = packet.GetShort();
+				short unkShort2 = packet.GetShort();
+				short unkShort3 = packet.GetShort();
+
+				var monsterData = ChannelServer.Instance.Data.MonsterDb.Find(46011);
+				var monster = new Monster(46011, NpcType.NPC);
+				monster.Name = "Bonfire";
+				monster.Position = new Position(x, conn.SelectedCharacter.Position.Y, z);
+				monster.Direction = new Direction(0);
+				monster.DisappearTime = DateTime.Now.AddMinutes(3);
+				conn.SelectedCharacter.Map.AddMonster(monster);
+
+				Send.ZC_ENTER_MONSTER(monster);
+				Send.ZC_NORMAL_Fireplace(monster);
+			}
+		}
+
+		/// <summary>
 		/// Sent mid-loading, after the player entered the world.
 		/// </summary>
 		/// <param name="conn"></param>
@@ -870,6 +902,18 @@ namespace Melia.Channel.Network
 		}
 
 		/// <summary>
+		/// Resurrect on savepoint
+		/// </summary>
+		/// <param name="conn"></param>
+		/// <param name="packet"></param>
+		[PacketHandler(Op.CZ_RESURRECT)]
+		public void CZ_RESURRECT(ChannelConnection conn, Packet packet)
+		{
+			Send.ZC_SAVE_INFO(conn);
+			Send.ZC_RESURRECT_SAVE_POINT_ACK(conn);
+		}
+
+		/// <summary>
 		/// Sent once a minute to check ping?
 		/// </summary>
 		/// <param name="conn"></param>
@@ -878,6 +922,17 @@ namespace Melia.Channel.Network
 		public void CZ_CHECK_PING(ChannelConnection conn, Packet packet)
 		{
 			// No parameters, no response.
+		}
+
+		/// <summary>
+		/// Resurrect on savepoint
+		/// </summary>
+		/// <param name="conn"></param>
+		/// <param name="packet"></param>
+		[PacketHandler(Op.CZ_SAVE_INFO)]
+		public void CZ_SAVE_INFO(ChannelConnection conn, Packet packet)
+		{
+			Send.ZC_MOVE_ZONE(conn);
 		}
 
 		/// <summary>

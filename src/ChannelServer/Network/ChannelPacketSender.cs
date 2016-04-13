@@ -795,6 +795,30 @@ namespace Melia.Channel.Network
 		}
 
 		/// <summary>
+		/// After ZC_RESURRECT
+		/// </summary>
+		/// <param name="character"></param>
+		public static void ZC_SAVE_INFO(ChannelConnection conn)
+		{
+			var packet = new Packet(Op.ZC_SAVE_INFO);
+
+			conn.Send(packet);
+		}
+
+		/// <summary>
+		/// After ZC_RESURRECT
+		/// </summary>
+		/// <param name="character"></param>
+		public static void ZC_RESURRECT_SAVE_POINT_ACK(ChannelConnection conn)
+		{
+			var packet = new Packet(Op.ZC_RESURRECT_SAVE_POINT_ACK);
+			
+			packet.PutByte(0);
+
+			conn.Send(packet);
+		}
+
+		/// <summary>
 		/// Broadcasts ZC_SET_POS in range of character, updating its position.
 		/// </summary>
 		/// <param name="character"></param>
@@ -1282,6 +1306,26 @@ namespace Melia.Channel.Network
 			packet.PutEmptyBin(8);
 
 			character.Map.Broadcast(packet, character);
+		}
+
+		/// <summary>
+		/// Playce a fireplace
+		/// </summary>
+		/// <param name="monster"></param>
+		public static void ZC_NORMAL_Fireplace(Monster monster)
+		{
+			var packet = new Packet(Op.ZC_NORMAL);
+			packet.PutInt(0x11);
+			packet.PutInt(monster.Handle);
+			packet.PutShort(-5515);
+			packet.PutShort(0);
+			packet.PutFloat(1);
+			packet.PutInt(2);
+			packet.PutInt(0);
+			packet.PutInt(0);
+			packet.PutInt(0);
+
+			monster.Map.Broadcast(packet, monster);
 		}
 
 		/// <summary>

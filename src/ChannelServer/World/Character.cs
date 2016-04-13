@@ -44,6 +44,11 @@ namespace Melia.Channel.World
 		public Map Map { get { return _map; } set { _map = value ?? Map.Limbo; } }
 
 		/// <summary>
+		/// Gets or sets whether the character is dead.
+		/// </summary>
+		public bool IsDead { get; set; }
+
+		/// <summary>
 		/// Gets or sets whether the character is moving.
 		/// </summary>
 		public bool IsMoving { get; set; }
@@ -488,8 +493,45 @@ namespace Melia.Channel.World
 		/// <summary>
 		/// Update character every Heartbeat
 		/// </summary>
-		public void RestoreHpSp()
+		public void UpdateHpAndSp()
 		{
+			if (this.Hp <= 0)
+			{
+				if (!this.IsDead)
+				{
+					Send.ZC_ADDON_MSG(this, "HELP_MSG_CLOSE");
+					//Send.ZC_DEAD(this);
+					this.IsDead = true;
+				}
+				return;
+			} else if (this.IsDead) this.IsDead = !this.IsDead;
+
+			if (this.IsSitting)
+			{
+				var bonefiresOnMap = this.Map.GetVisibleMonsters(this).Where(z => z.Id == 46011).ToList();
+                foreach (var monster in bonefiresOnMap)
+				{
+					this.IsNearFireplace = monster.Position.InRange2D(this.Position, 50);
+					if (this.IsNearFireplace)
+					{
+						if (this.RestoreFireplaceTimer == DateTime.MaxValue)
+							this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);
+					}
+					else
+					{
+						if (this.RestoreFireplaceTimer != DateTime.MaxValue)
+							this.RestoreFireplaceTimer = DateTime.MaxValue;
+					}
+				}
+				if (bonefiresOnMap.Count == 0)
+				{
+					this.IsNearFireplace = false;
+					this.RestoreFireplaceTimer = DateTime.MaxValue;
+				}
+			}
+			else
+				this.RestoreFireplaceTimer = DateTime.MaxValue;
+
 			if (this.RestoreTimer <= DateTime.Now)
 			{
 				if (this.Sp < this.MaxSp)
@@ -525,7 +567,7 @@ namespace Melia.Channel.World
 					if (this.Sp > this.MaxSp)
 						this.Sp = this.MaxSp;
 					
-					Send.ZC_HEAL_INFO(this, restoredSp, this.MaxSp, false);
+					Send.ZC_HEAL_INFO(this, restoredSp, this.Sp, false);
 
 					this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);
 				}
@@ -536,8 +578,7 @@ namespace Melia.Channel.World
 						restoredHp = this.MaxHp - this.Hp;
 					this.Hp += restoredHp;
 					
-					Send.ZC_HEAL_INFO(this, restoredHp, this.MaxHp, true);
-					Send.ZC_NORMAL_HpChanged(this, restoredHp);
+					Send.ZC_HEAL_INFO(this, restoredHp, this.Hp, true);
 
 					this.RestoreFireplaceTimer = DateTime.Now.AddSeconds(2);
 				}
@@ -568,7 +609,7 @@ namespace Melia.Channel.World
 
 		public void UpdateCharacter()
 		{
-			this.RestoreHpSp();
+			this.UpdateHpAndSp();
 		}
 	}
 }
